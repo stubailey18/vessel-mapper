@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Vessel Mapper</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link 
+            rel="stylesheet" 
+            href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" 
+            integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" 
+            crossorigin="" />
+        <link 
+            rel="stylesheet" 
+            href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+            integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+            crossorigin="" />
+        <script 
+            src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+            integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+            crossorigin="">
+        </script>
+        <script src="tokens.js"></script>
+        <style>
+            html, body {
+                height: 100%;
+            }
+            .row {
+                height: 100vh;
+            }
+        </style>
+        <script>
+            let map = null;
+            const mapboxTileLayerUrl = 'https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}';
+            const mapboxAttribution = 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>';
+            const vesselPositionUrl = 'https://services.marinetraffic.com/api/exportvessel';
+            const vesselTrackUrl = 'https://services.marinetraffic.com/api/exportvesseltrack';
+
+            window.onload = function() {
+                navigator.geolocation.getCurrentPosition(position => {
+                    const {latitude: lat, longitude: lon} = position.coords;
+                    // the second arg is the zoom level
+                    map = L.map('map').setView([lat, lon], 14);
+                    L.tileLayer(mapboxTileLayerUrl, {
+                        attribution: mapboxAttribution,
+                        maxZoom: 18,
+                        id: 'mapbox/streets-v11',
+                        tileSize: 512,
+                        zoomOffset: -1,
+                        accessToken: mapboxToken
+                    }).addTo(map);
+                    L.marker([lat, lon]).addTo(map);
+                    map.on('click', event => {
+                        document.querySelector('#latField').value = event.latlng.lat;
+                        document.querySelector('#lonField').value = event.latlng.lng;
+                    });
+                });
+                
+                document.querySelector('#showVesselPositionButton').onclick = async () => {
+                    var mmsi = document.querySelector('#mmsiField').value;
+                    if (mmsi) {
+                        try {
+                            const response = await fetch(`${vesselPositionUrl}/v:5/${vesselPositionToken}/timespan:20/mmsi:${mmsi}?protocol=json`);
+                            const data = await response.json();
+                            const lat = data[0][1];
+                            const lon = data[0][2];
+                            // the second arg is the zoom level
+                            map.setView([lat, lon], 7);
+                            L.marker([lat, lon]).addTo(map);
+                        } catch (error) {
+                            alert(error);
+                        }
+                    }
+                }
+
+                document.querySelector('#showVesselHistoricalTrackButton').onclick = async () => {
+                    var mmsi = document.querySelector('#mmsiField').value;
+                    var numDays = document.querySelector('#numDaysField').value;
+                    if (mmsi && numDays) {
+                        try {
+                            const response = await fetch(`${vesselTrackUrl}/${vesselTrackToken}/v:2/period:daily/days:${numDays}/mmsi:${mmsi}?protocol=json`);
+                            const data = await response.json();
+                            // the data comprises an array of arrays
+                            // a polyline is constructed from an array of arrays, e.g. [[lat1, lon1], [lat2, lon2]]
+                            const coords = [];
+                            for (let array of data) {
+                                const lat = array[4];
+                                const lon = array[3];
+                                coords.push([lat, lon]);
+                            }
+                            const polyline = L.polyline(coords, {color: 'red'});
+                            const layerGroup = L.layerGroup([polyline]);
+                            addLayerToMap(layerGroup, mmsi);
+                            // center the map over the polyline
+                            const middleIndex = parseInt(data.length / 2);
+                            const lat = data[middleIndex][4];
+                            const lon = data[middleIndex][3];
+                            map.setView([lat, lon], 7);
+                        } catch (error) {
+                            alert(error);
+                        }
+                    }
+                }
+            }
+
+            function addLayerToMap(layerGroup, label) {
+                const layersDiv = document.querySelector('#layersDiv');
+                const p = document.createElement('p');
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.checked = true;
+                checkbox.onchange = () => {
+                    if (checkbox.checked) {
+                        map.addLayer(layerGroup);
+                    } else {
+                        map.removeLayer(layerGroup);
+                    }
+                }
+                const span = document.createElement('span');
+                span.innerHTML = '&nbsp;' + label;
+                p.appendChild(checkbox);
+                p.appendChild(span);
+                layersDiv.appendChild(p);
+                layerGroup.addTo(map);
+            }
+        </script>
+    </head>
+    <body>
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-sm-3">
+                    <h3 class="mt-2">Vessel Mapper</h3>
+                    <div class="form-group">
+                        <label>Last click latitude</label>
+                        <input 
+                            type="text" 
+                            id="latField" 
+                            disabled 
+                            class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Last click longitude</label>
+                        <input 
+                            type="text" 
+                            id="lonField" 
+                            disabled 
+                            class="form-control">
+                    </div>
+                    <hr />
+                    <div class="form-group">
+                        <label>Vessel MMSI</label>
+                        <input 
+                            type="text" 
+                            id="mmsiField" 
+                            class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <button 
+                            id="showVesselPositionButton" 
+                            class="btn btn-light">
+                            Show Current Position
+                        </button>
+                    </div>
+                    <div class="form-group">
+                        <label>Number of days</label>
+                        <input 
+                            type="text" 
+                            id="numDaysField" 
+                            value="3" 
+                            class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <button 
+                            id="showVesselHistoricalTrackButton" 
+                            class="btn btn-light">
+                            Show Historical Track
+                        </button>
+                    </div>
+                    <hr />
+                    <div id="layersDiv"></div>
+                </div>
+                <div id="map" class="col-sm-9">Map part</div>
+            </div>
+        </div>
+    </body>
+</html>
