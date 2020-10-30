@@ -26,6 +26,14 @@
             .row {
                 height: 100vh;
             }
+            .invalidField {
+                border: solid 1px red;
+            }
+            @media screen and (max-width: 575px) {
+                #map {
+                    height: 75vh;
+                }
+            }
         </style>
         <script>
             let map = null;
@@ -34,7 +42,7 @@
             const vesselPositionUrl = 'https://services.marinetraffic.com/api/exportvessel';
             const vesselTrackUrl = 'https://services.marinetraffic.com/api/exportvesseltrack';
 
-            window.onload = function() {
+            window.onload = () => {
                 navigator.geolocation.getCurrentPosition(position => {
                     const {latitude: lat, longitude: lon} = position.coords;
                     // the second arg is the zoom level
@@ -53,10 +61,16 @@
                         document.querySelector('#lonField').value = event.latlng.lng;
                     });
                 });
+
+                document.querySelector('#mmsiField').onchange = event => {
+                    if (event.target.value) {
+                        event.target.classList.remove('invalidField');
+                    }
+                }
                 
                 document.querySelector('#showVesselPositionButton').onclick = async () => {
-                    var mmsi = document.querySelector('#mmsiField').value;
-                    if (mmsi) {
+                    var mmsiField = document.querySelector('#mmsiField');
+                    if (mmsiField.value) {
                         try {
                             const response = await fetch(`${vesselPositionUrl}/v:5/${vesselPositionToken}/timespan:20/mmsi:${mmsi}?protocol=json`);
                             const data = await response.json();
@@ -65,16 +79,18 @@
                             // the second arg is the zoom level
                             map.setView([lat, lon], 7);
                             L.marker([lat, lon]).addTo(map);
-                        } catch (error) {
-                            alert(error);
+                        } catch {
+                            alert('I don\'t recognise that MMSI');
                         }
+                    } else {
+                        mmsiField.classList.add('invalidField');
                     }
                 }
 
                 document.querySelector('#showVesselHistoricalTrackButton').onclick = async () => {
-                    var mmsi = document.querySelector('#mmsiField').value;
-                    var numDays = document.querySelector('#numDaysField').value;
-                    if (mmsi && numDays) {
+                    var mmsiField = document.querySelector('#mmsiField');
+                    var numDaysField = document.querySelector('#numDaysField');
+                    if (mmsiField.value && numDaysField.value) {
                         try {
                             const response = await fetch(`${vesselTrackUrl}/${vesselTrackToken}/v:2/period:daily/days:${numDays}/mmsi:${mmsi}?protocol=json`);
                             const data = await response.json();
@@ -94,14 +110,16 @@
                             const lat = data[middleIndex][4];
                             const lon = data[middleIndex][3];
                             map.setView([lat, lon], 7);
-                        } catch (error) {
-                            alert(error);
+                        } catch {
+                            alert('I don\'t recognise that MMSI');
                         }
+                    } else {
+                        mmsiField.classList.add('invalidField');
                     }
                 }
             }
 
-            function addLayerToMap(layerGroup, label) {
+            const addLayerToMap = (layerGroup, label) => {
                 const layersDiv = document.querySelector('#layersDiv');
                 const p = document.createElement('p');
                 const checkbox = document.createElement('input');
@@ -164,7 +182,8 @@
                         <input 
                             type="text" 
                             id="numDaysField" 
-                            value="3" 
+                            value="3"
+                            disabled 
                             class="form-control">
                     </div>
                     <div class="form-group">
