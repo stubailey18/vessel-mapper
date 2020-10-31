@@ -104,13 +104,13 @@
                             }
                             const polyline = L.polyline(coords, {color: 'red'});
                             const layerGroup = L.layerGroup([polyline]);
-                            addLayerToMap(layerGroup, mmsi);
+                            addLayerToMap(layerGroup, mmsiField.value);
                             // center the map over the polyline
                             const middleIndex = parseInt(data.length / 2);
                             const lat = data[middleIndex][4];
                             const lon = data[middleIndex][3];
                             map.setView([lat, lon], 7);
-                        } catch {
+                        } catch (error) {
                             alert('I don\'t recognise that MMSI');
                         }
                     } else {
