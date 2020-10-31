@@ -92,7 +92,7 @@
                     var numDaysField = document.querySelector('#numDaysField');
                     if (mmsiField.value && numDaysField.value) {
                         try {
-                            const response = await fetch(`${vesselTrackUrl}/${vesselTrackToken}/v:2/period:daily/days:${numDays}/mmsi:${mmsiField.value}?protocol=json`);
+                            const response = await fetch(`${vesselTrackUrl}/${vesselTrackToken}/v:2/period:daily/days:${numDaysField.value}/mmsi:${mmsiField.value}?protocol=json`);
                             const data = await response.json();
                             // the data comprises an array of arrays
                             // a polyline is constructed from an array of arrays, e.g. [[lat1, lon1], [lat2, lon2]]
@@ -182,7 +182,7 @@
                         <input 
                             type="text" 
                             id="numDaysField" 
-                            value="3"
+                            value="5"
                             disabled 
                             class="form-control">
                     </div>
