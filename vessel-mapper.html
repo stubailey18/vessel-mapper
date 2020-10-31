@@ -72,7 +72,7 @@
                     var mmsiField = document.querySelector('#mmsiField');
                     if (mmsiField.value) {
                         try {
-                            const response = await fetch(`${vesselPositionUrl}/v:5/${vesselPositionToken}/timespan:20/mmsi:${mmsi}?protocol=json`);
+                            const response = await fetch(`${vesselPositionUrl}/v:5/${vesselPositionToken}/timespan:20/mmsi:${mmsiField.value}?protocol=json`);
                             const data = await response.json();
                             const lat = data[0][1];
                             const lon = data[0][2];
@@ -92,7 +92,7 @@
                     var numDaysField = document.querySelector('#numDaysField');
                     if (mmsiField.value && numDaysField.value) {
                         try {
-                            const response = await fetch(`${vesselTrackUrl}/${vesselTrackToken}/v:2/period:daily/days:${numDays}/mmsi:${mmsi}?protocol=json`);
+                            const response = await fetch(`${vesselTrackUrl}/${vesselTrackToken}/v:2/period:daily/days:${numDays}/mmsi:${mmsiField.value}?protocol=json`);
                             const data = await response.json();
                             // the data comprises an array of arrays
                             // a polyline is constructed from an array of arrays, e.g. [[lat1, lon1], [lat2, lon2]]
