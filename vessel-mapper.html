@@ -72,7 +72,7 @@
                     var mmsiField = document.querySelector('#mmsiField');
                     if (mmsiField.value) {
                         try {
-                            const response = await fetch(`${vesselPositionUrl}/v:5/${vesselPositionToken}/timespan:20/mmsi:${mmsiField.value}?protocol=json`);
+                            const response = await fetch(`${vesselPositionUrl}/${vesselPositionToken}?v=5&timespan=20&mmsi=${mmsiField.value}&protocol=json`);
                             const data = await response.json();
                             const lat = data[0][1];
                             const lon = data[0][2];
