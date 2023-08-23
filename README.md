@@ -5,6 +5,5 @@ I built this page for mapping vessels whilst delivering a JavaScript course for 
 You can see the page in action [here](https://optimistic-heyrovsky-02bfd1.netlify.app/vessel-mapper.html). Note that I've disabled editing of the num days field to limit the number hits to MarineTraffic (the API ain't free). This means that to see the vessel track you have to zoom in very close. 
 
 Here are some vessel MMSI numbers you might use to test it out:
-- 310627000: Queens Mary II
-- 311000084: Ramform Titan
-- 311020600: Oasis of the Seas
+- 636022398: SA Europe (Oil Tanker)
+- 205753000: Oceania (Floating Storage)
